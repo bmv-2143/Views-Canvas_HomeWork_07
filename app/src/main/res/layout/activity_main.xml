@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".presentation.MainActivity">
 
-    <otus.homework.customview.presentation.PieChartView
+    <otus.homework.customview.presentation.piechartview.PieChartView
         android:id="@+id/pieChartView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

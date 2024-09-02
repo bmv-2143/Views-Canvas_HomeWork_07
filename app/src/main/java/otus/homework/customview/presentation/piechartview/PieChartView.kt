@@ -1,4 +1,4 @@
-package otus.homework.customview.presentation
+package otus.homework.customview.presentation.piechartview
 
 import android.content.Context
 import android.graphics.Canvas
@@ -6,14 +6,12 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import otus.homework.customview.data.Payload
-import otus.homework.customview.utils.TAG
+import otus.homework.customview.presentation.piechartview.GeometryHelper.isClickWithinPieChartAngle
 import otus.homework.customview.utils.dp
 import otus.homework.customview.utils.px
-import otus.homework.customview.utils.sp
 import kotlin.math.min
 
 
@@ -53,7 +51,7 @@ class PieChartView @JvmOverloads constructor(
     }
 
     private fun calculateAngles() {
-        angles.clear()  // Clear the previous angles
+        angles.clear()
         var startAngle = 0f
         var endAngle = 0f
         var color = PieChartColor.BLUE
@@ -63,12 +61,11 @@ class PieChartView @JvmOverloads constructor(
             startAngle = endAngle
             color = color.nextColor()
         }
-        Log.e(TAG, "Angles: $angles")
     }
 
-    private fun getTotalAmount(): Int = payloads.sumOf { it.amount }
-
     private fun getAngleForPayload(payload: Payload): Float = (payload.amount.toFloat() / getTotalAmount()) * 360f
+
+    private fun getTotalAmount(): Int = payloads.sumOf { it.amount }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val widthMode = MeasureSpec.getMode(widthMeasureSpec)
@@ -96,15 +93,9 @@ class PieChartView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         setPieChartContainerRectBounds()
         drawPieChart(canvas)
-        drawTextBelowPieChart(canvas, blackPaint, "Payload name")
-
-        if (selectedAngle != null) {
-            selectedAngle?.draw(canvas, pieChartContainer, blackPaint)
-        }
 
         selectedAngle?.let {
             canvas.drawArc(pieChartContainer, it.startAngle, it.sweepAngle, true, blackPaint)
-            Log.e(TAG, "SELECTED: ${it.startAngle}, ${it.endAngle}, color: ${blackPaint.color}")
         }
     }
 
@@ -128,86 +119,28 @@ class PieChartView @JvmOverloads constructor(
     private fun drawSector(canvas: Canvas, angle: PieChartAngle) {
         sectorPaint.color = angle.color.intColor
         canvas.drawArc(pieChartContainer, angle.startAngle, angle.sweepAngle, true, sectorPaint)
-        Log.e(TAG, "Draw angle: ${angle.startAngle}, ${angle.endAngle}, color: ${sectorPaint.color}")
-        Log.e(TAG, "Draw angle: $angle")
     }
 
-    fun drawTextBelowPieChart(canvas: Canvas, paint: Paint, text: String) {
-        paint.textSize = 32.sp.px.toFloat()
-        paint.textAlign = Paint.Align.CENTER
-
-        // Calculate the position for the text
-        val x = pieChartContainer.left + (pieChartContainer.right - pieChartContainer.left) / 2
-        val y = pieChartContainer.bottom + paint.textSize + 16.dp.px // Adding some padding
-
-        canvas.drawText(text, x, y, paint)
-
-        val textWidth = paint.measureText("Hello Ivan!")
-    }
-
+    @Suppress("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (isClickInsidePieChart(event)) {
+        if (GeometryHelper.isClickInsidePieChart(event, pieChartContainer)) {
             selectedAngle = getSelectedAngle(event)
             invalidate()
         }
+
+        if (event.action == MotionEvent.ACTION_UP) {
+            return super.performClick()
+        }
+
         return true
     }
 
     private fun getSelectedAngle(event: MotionEvent): PieChartAngle? {
         for (angle in angles) {
-            if (isClickWithinPieChartAngle(event, angle)) {
+            if (isClickWithinPieChartAngle(event, angle, pieChartContainer)) {
                 return angle
             }
         }
         return null
-    }
-
-    private fun isClickInsidePieChart(event: MotionEvent): Boolean {
-        val x = event.x
-        val y = event.y
-
-        val centerX = pieChartContainer.centerX()
-        val centerY = pieChartContainer.centerY()
-        val radius = pieChartContainer.width() / 2
-
-        val distance = Math.sqrt(Math.pow((x - centerX).toDouble(), 2.0) + Math.pow((y - centerY).toDouble(), 2.0))
-
-        return distance <= radius
-    }
-
-    private fun isClickWithinPieChartAngle(event: MotionEvent, angle: PieChartAngle): Boolean {
-        val x = event.x
-        val y = event.y
-
-        val centerX = pieChartContainer.centerX()
-        val centerY = pieChartContainer.centerY()
-
-        // Calculate the angle of the click relative to the center of the pie chart
-        val clickAngle = Math.toDegrees(Math.atan2((y - centerY).toDouble(), (x - centerX).toDouble())).toFloat()
-
-        // Normalize the angle to be within the range [0, 360)
-        val normalizedClickAngle = (clickAngle + 360) % 360
-
-        // Check if the normalized click angle is within the start and end angles of the PieChartAngle
-        return normalizedClickAngle >= angle.startAngle && normalizedClickAngle <= angle.endAngle
-    }
-
-    override fun performClick(): Boolean {
-        return super.performClick()
-    }
-
-    private data class PieChartAngle(
-        val id: Int,
-        val startAngle: Float,
-        val endAngle: Float,
-        val color: PieChartColor
-    ) {
-
-        val sweepAngle: Float
-            get() = endAngle - startAngle
-
-        fun draw(canvas: Canvas, pieChartContainer: RectF, sectorPaint: Paint) {
-            canvas.drawArc(pieChartContainer, startAngle, endAngle - startAngle, true, sectorPaint)
-        }
     }
 }
