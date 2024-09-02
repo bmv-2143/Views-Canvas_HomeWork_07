@@ -6,12 +6,12 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
-import otus.homework.customview.utils.TAG
+import otus.homework.customview.data.Payload
 import otus.homework.customview.utils.dp
 import otus.homework.customview.utils.px
 import otus.homework.customview.utils.sp
+import kotlin.math.min
 
 
 class PieChartView @JvmOverloads constructor(
@@ -19,12 +19,9 @@ class PieChartView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
 ) : View(context, attrs) {
 
-
-    private val yellowPaint = Paint().apply {
-        color = Color.YELLOW
-        strokeWidth = 10f
-        style = Paint.Style.FILL
-    }
+    private val defaultWidthPx = 300.dp.px
+    private val defaultHeightPx = 300.dp.px
+    private val pieChartPaddingPx = 32.dp.px
 
     private val blackPaint = Paint().apply {
         color = Color.BLACK
@@ -32,79 +29,59 @@ class PieChartView @JvmOverloads constructor(
         style = Paint.Style.FILL
     }
 
-    private val greenStrokePaint = Paint().apply {
+    private val sectorPaint = Paint().apply {
         color = Color.GREEN
         strokeWidth = 10f
-        style = Paint.Style.STROKE
+        style = Paint.Style.FILL
     }
 
-    private val boldRedPaint = Paint().apply {
-        color = Color.RED
-        strokeWidth = 30f
-    }
-
+    private var currentColor = PieChartColor.BLUE
     private val pieChartContainer = RectF()
 
+    private var payloads: List<Payload> = emptyList()
+
+    fun setPayloads(payloads: List<Payload>) {
+        this.payloads = payloads
+        invalidate()
+    }
+
+    private fun getTotalAmount(): Int = payloads.sumOf { it.amount }
+
+    private fun getAngleForPayload(payload: Payload): Float = (payload.amount.toFloat() / getTotalAmount()) * 360f
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        // todo: the view should be always square? If yes, then should use something like min(width, height) here ...
-
         val widthMode = MeasureSpec.getMode(widthMeasureSpec)
         val widthSize = MeasureSpec.getSize(widthMeasureSpec)
         val heightMode = MeasureSpec.getMode(heightMeasureSpec)
         val heightSize = MeasureSpec.getSize(heightMeasureSpec)
 
+        val size = min(widthSize, heightSize)
+
         val width: Int = when (widthMode) {
-            MeasureSpec.EXACTLY ->
-                widthSize
-                    .also {
-                        Log.e(TAG, "onMeasure: EXACTLY: widthSize/heightSize = $widthSize / $heightSize")
-                    }
-
-            MeasureSpec.AT_MOST ->
-                DEFAULT_WIDTH.coerceAtMost(widthSize)
-                    .also {
-                        Log.e(TAG, "onMeasure: AT_MOST: widthSize/heightSize = $widthSize / $heightSize")
-                    }
-
-            else ->
-                DEFAULT_WIDTH.also {
-                    Log.e(TAG, "onMeasure: UNSPECIFIED: widthSize/heightSize = $widthSize / $heightSize")
-                }
+            MeasureSpec.EXACTLY -> size
+            MeasureSpec.AT_MOST -> defaultWidthPx.coerceAtMost(size)
+            else -> defaultWidthPx
         }
 
         val height: Int = when (heightMode) {
-            MeasureSpec.EXACTLY -> heightSize
-            MeasureSpec.AT_MOST -> DEFAULT_HEIGHT.coerceAtMost(heightSize)
-            else -> DEFAULT_HEIGHT
+            MeasureSpec.EXACTLY -> size
+            MeasureSpec.AT_MOST -> defaultHeightPx.coerceAtMost(size)
+            else -> defaultHeightPx
         }
 
         setMeasuredDimension(width, height)
-        Log.e(TAG, "setMeasuredDimension: width/height = $width / $height")
     }
 
     override fun onDraw(canvas: Canvas) {
-        val centerX = width / 2
-        val centerY = height / 2
-
-        setPieChartContainerRectBounds(centerX, centerY)
+        setPieChartContainerRectBounds()
         drawPieChart(canvas)
-        canvas.drawLine(pieChartContainer.left, 0f, pieChartContainer.left, height.toFloat(), yellowPaint)
-
-        drawTextBelowPieChart(canvas)
-
-        // rect offset
-        pieChartContainer.offset(30f, -30f)
-        canvas.drawArc(pieChartContainer, 270f, 90f, true, greenStrokePaint)
-
-        canvas.drawLine(0f, centerY.toFloat(), width.toFloat(), centerY.toFloat(), yellowPaint)
-        canvas.drawLine(centerX.toFloat(), 0f, centerX.toFloat(), height.toFloat(), yellowPaint)
+        drawTextBelowPieChart(canvas, blackPaint, "Payload name")
     }
 
-    private fun setPieChartContainerRectBounds(centerX: Int, centerY: Int) {
-
-        val pieChartSizeWithPadding = width - 32.dp.px
-
+    private fun setPieChartContainerRectBounds() {
+        val centerX = width / 2
+        val centerY = height / 2
+        val pieChartSizeWithPadding = measuredWidth - pieChartPaddingPx
         val left = centerX - pieChartSizeWithPadding / 2
         val top = centerY - pieChartSizeWithPadding / 2
         val right = centerX + pieChartSizeWithPadding / 2
@@ -113,72 +90,34 @@ class PieChartView @JvmOverloads constructor(
     }
 
     private fun drawPieChart(canvas: Canvas) {
-        canvas.drawRect(pieChartContainer, blackPaint)
+        var startAngle = 0f
 
-        // draw lines at borders of pieChartContainer with yellow paint
-        drawBorderLines(canvas)
-
-        canvas.drawArc(pieChartContainer, 0f, 90f, true, blackPaint)
-        canvas.drawArc(pieChartContainer, 90f, 90f, true, greenStrokePaint)
-        canvas.drawArc(pieChartContainer, 180f, 90f, true, boldRedPaint)
+        for (payload in payloads) {
+            drawSector(canvas, payload, startAngle)
+            currentColor = currentColor.nextColor()
+            startAngle += getAngleForPayload(payload)
+        }
     }
 
-    private fun drawBorderLines(canvas: Canvas) {
-        // Draw top border line
-        canvas.drawLine(
-            pieChartContainer.left,
-            pieChartContainer.top,
-            pieChartContainer.right,
-            pieChartContainer.top,
-            yellowPaint
-        )
-
-        // Draw bottom border line
-        canvas.drawLine(
-            pieChartContainer.left,
-            pieChartContainer.bottom,
-            pieChartContainer.right,
-            pieChartContainer.bottom,
-            yellowPaint
-        )
-
-        // Draw left border line
-        canvas.drawLine(
-            pieChartContainer.left,
-            pieChartContainer.top,
-            pieChartContainer.left,
-            pieChartContainer.bottom,
-            yellowPaint
-        )
-
-        // Draw right border line
-        canvas.drawLine(
-            pieChartContainer.right,
-            pieChartContainer.top,
-            pieChartContainer.right,
-            pieChartContainer.bottom,
-            yellowPaint
-        )
+    private fun drawSector(canvas: Canvas, payload: Payload, startAngle: Float) {
+        val angle = getAngleForPayload(payload)
+        sectorPaint.color = currentColor.intColor
+        canvas.drawArc(pieChartContainer, startAngle, angle, true, sectorPaint)
     }
 
-    private fun drawTextBelowPieChart(canvas: Canvas) {
-        val text = "Your Text Here"
-        blackPaint.textSize = 32.sp.px.toFloat()
-        blackPaint.textAlign = Paint.Align.CENTER
+    fun drawTextBelowPieChart(canvas: Canvas, paint : Paint, text : String) {
+        paint.textSize = 32.sp.px.toFloat()
+        paint.textAlign = Paint.Align.CENTER
 
         // Calculate the position for the text
 //        val x = pieChartContainer.left
         val x = pieChartContainer.left + (pieChartContainer.right - pieChartContainer.left) / 2
-        val y = pieChartContainer.bottom + blackPaint.textSize + 16.dp.px // Adding some padding
+        val y = pieChartContainer.bottom + paint.textSize + 16.dp.px // Adding some padding
 
         // Draw the text
-        canvas.drawText(text, x, y, blackPaint)
+        canvas.drawText(text, x, y, paint)
 
-        val textWidth = blackPaint.measureText("Hello Ivan!")
+        val textWidth = paint.measureText("Hello Ivan!")
     }
 
-    companion object {
-        private const val DEFAULT_WIDTH = 600
-        private const val DEFAULT_HEIGHT = 600
-    }
 }
