@@ -26,7 +26,7 @@ class PieChartView @JvmOverloads constructor(
     private val defaultHeightPx = 300.dp.px
     private val pieChartPaddingPx = 32.dp.px
 
-    private val blackPaint = Paint().apply {
+    private val selectionPaint = Paint().apply {
         color = Color.BLACK
         strokeWidth = 20f
         style = Paint.Style.STROKE
@@ -46,7 +46,7 @@ class PieChartView @JvmOverloads constructor(
 
     private var selectedSector: PieChartAngle? = null
     private val angleCalculator = PieChartAngleCalculator()
-
+    private val pieChartDrawer = PieChartDrawer(pieChartContainer, sectorPaint, selectionPaint)
 
     fun setPayloads(payloads: List<Payload>) {
         this.payloads = payloads
@@ -79,34 +79,9 @@ class PieChartView @JvmOverloads constructor(
     }
 
     override fun onDraw(canvas: Canvas) {
-        setPieChartContainerRectBounds()
-        drawPieChart(canvas)
-
-        selectedSector?.let {
-            canvas.drawArc(pieChartContainer, it.startAngle, it.sweepAngle, true, blackPaint)
-        }
-    }
-
-    private fun setPieChartContainerRectBounds() {
-        val centerX = width / 2
-        val centerY = height / 2
-        val pieChartSizeWithPadding = measuredWidth - pieChartPaddingPx
-        val left = centerX - pieChartSizeWithPadding / 2
-        val top = centerY - pieChartSizeWithPadding / 2
-        val right = centerX + pieChartSizeWithPadding / 2
-        val bottom = centerY + pieChartSizeWithPadding / 2
-        pieChartContainer.set(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
-    }
-
-    private fun drawPieChart(canvas: Canvas) {
-        for (angle in angles) {
-            drawSector(canvas, angle)
-        }
-    }
-
-    private fun drawSector(canvas: Canvas, angle: PieChartAngle) {
-        sectorPaint.color = angle.color.intColor
-        canvas.drawArc(pieChartContainer, angle.startAngle, angle.sweepAngle, true, sectorPaint)
+        pieChartDrawer.setPieChartContainerRectBounds(this, pieChartPaddingPx)
+        pieChartDrawer.drawPieChart(canvas, angles)
+        pieChartDrawer.drawSelectedSector(canvas, selectedSector)
     }
 
     @Suppress("ClickableViewAccessibility")
