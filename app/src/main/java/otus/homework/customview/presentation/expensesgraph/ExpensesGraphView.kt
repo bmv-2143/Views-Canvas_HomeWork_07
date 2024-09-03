@@ -19,7 +19,11 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
     private val defaultHeightPx = 300.dp.px
     private val axisPaddingPx = 16.dp.px
     private val axisTickHeightPx = 10.dp.px
-    private val tickCount = 10
+    private val tickCountX = 10
+    private val tickCountY = 5
+    private val axisYMaxValue = 10f
+    private val axisXMaxValue = 31f
+    private val gridDotSizePx = 2.dp.px
 
     private val axisPaint = Paint().apply {
         color = Color.BLACK
@@ -30,6 +34,12 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
     private val axisTickPaint = Paint().apply {
         color = Color.DKGRAY
         strokeWidth = 5f
+        style = Paint.Style.FILL
+    }
+
+    private val gridDotPaint = Paint().apply {
+        color = Color.GRAY
+        strokeWidth = 1f
         style = Paint.Style.FILL
     }
 
@@ -75,9 +85,10 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
     }
 
     override fun onDraw(canvas: Canvas) {
-
         drawTicksOnXAxis(canvas)
+        drawTicksOnYAxis(canvas)
         drawAxis(canvas)
+        drawDotsAtTickIntersections(canvas)
     }
 
     private fun drawAxis(canvas: Canvas) {
@@ -96,10 +107,10 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         val xAxisYPos = (height - axisPaddingPx).toFloat()
         val xAxisXPos = (width - axisPaddingPx).toFloat()
 
-        val tickStep = (xAxisXPos - axisPaddingPx) / tickCount
-        var currentX : Float = axisPaddingPx.toFloat() + tickStep
+        val tickStep = (xAxisXPos - axisPaddingPx) / tickCountX
+        var currentX: Float = axisPaddingPx.toFloat() + tickStep
 
-        for (i in 0 until tickCount) {
+        for (i in 0 until tickCountX) {
             drawAxisXTick(canvas, currentX, xAxisYPos, axisTickHeightPx)
             currentX += tickStep
         }
@@ -109,4 +120,101 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         canvas.drawLine(tickX, tickStartY, tickX, tickStartY - tickHeight, axisTickPaint)
     }
 
+    private fun drawTicksOnYAxis(canvas: Canvas) {
+        val yAxisXPos = axisPaddingPx.toFloat()
+        val yAxisYPos = (height - axisPaddingPx).toFloat()
+
+        val tickStep = (yAxisYPos - axisPaddingPx) / tickCountY
+        var currentY: Float = yAxisYPos - tickStep
+
+        for (i in 0 until tickCountY) {
+            drawAxisYTick(canvas, yAxisXPos, currentY, axisTickHeightPx)
+            currentY -= tickStep
+        }
+    }
+
+    private fun drawAxisYTick(canvas: Canvas, tickX: Float, tickStartY: Float, tickHeight: Int) {
+        canvas.drawLine(tickX, tickStartY, tickX + tickHeight, tickStartY, axisTickPaint)
+    }
+
+    private fun axisToScreenCoordinates(
+        axisX: Float,
+        axisY: Float,
+        maxXValue: Float = 31f,
+        maxYValue: Float = 10f
+    ): Point {
+
+        val drawableWidth = width - 2 * axisPaddingPx
+        val drawableHeight = height - 2 * axisPaddingPx
+
+        val xScaleFactor = drawableWidth / maxXValue
+        val yScaleFactor = drawableHeight / maxYValue
+
+        val screenX = axisPaddingPx + axisX * xScaleFactor
+        val screenY = height - axisPaddingPx - axisY * yScaleFactor
+
+        return Point(screenX, screenY)
+    }
+
+    private fun axisToScreenX(axisX: Float, maxXValue: Float = 31f): Float {
+        val drawableWidth = width - 2 * axisPaddingPx
+        val xScaleFactor = drawableWidth / maxXValue
+        return axisPaddingPx + axisX * xScaleFactor
+    }
+
+    private fun axisToScreenY(axisY: Float, maxYValue: Float = 10f): Float {
+        val drawableHeight = height - 2 * axisPaddingPx
+        val yScaleFactor = drawableHeight / maxYValue
+        return height - axisPaddingPx - axisY * yScaleFactor
+    }
+
+    fun drawDots(canvas: Canvas, xStep: Float, yStep: Float, paint: Paint) {
+        val maxX = axisXMaxValue
+        val maxY = axisYMaxValue
+
+        var x = 0f
+        while (x <= maxX) {
+            var y = 0f
+            while (y <= maxY) {
+                val screenX = axisToScreenX(x, maxX)
+                val screenY = axisToScreenY(y, maxY)
+                canvas.drawPoint(screenX, screenY, paint)
+                y += yStep
+            }
+            x += xStep
+        }
+    }
+
+    private fun drawDotsAtTickIntersections(canvas: Canvas) {
+        // Calculate tick positions on X axis
+        val xTickPositions = mutableListOf<Float>()
+        val xAxisXPos = (width - axisPaddingPx).toFloat()
+        val tickStepX = (xAxisXPos - axisPaddingPx) / tickCountX
+        var currentX: Float = axisPaddingPx.toFloat() + tickStepX
+        for (i in 0 until tickCountX) {
+            xTickPositions.add(currentX)
+            currentX += tickStepX
+        }
+
+        // Calculate tick positions on Y axis
+        val yTickPositions = mutableListOf<Float>()
+        val yAxisYPos = (height - axisPaddingPx).toFloat()
+        val tickStepY = (yAxisYPos - axisPaddingPx) / tickCountY
+        var currentY: Float = yAxisYPos - tickStepY
+        for (i in 0 until tickCountY) {
+            yTickPositions.add(currentY)
+            currentY -= tickStepY
+        }
+
+        // Draw dots at intersections of X and Y tick positions
+        for (x in xTickPositions) {
+            for (y in yTickPositions) {
+                canvas.drawCircle(x, y, gridDotSizePx.toFloat(), gridDotPaint)
+            }
+        }
+    }
+
+
+
+    private data class Point(val x: Float, val y: Float)
 }
