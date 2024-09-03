@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
+import android.os.Bundle
+import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -42,7 +44,7 @@ class PieChartView @JvmOverloads constructor(
 
     private val angles: MutableList<PieChartAngle> = mutableListOf()
 
-    private var selectedAngle: PieChartAngle? = null
+    private var selectedSector: PieChartAngle? = null
 
     fun setPayloads(payloads: List<Payload>) {
         this.payloads = payloads
@@ -94,7 +96,7 @@ class PieChartView @JvmOverloads constructor(
         setPieChartContainerRectBounds()
         drawPieChart(canvas)
 
-        selectedAngle?.let {
+        selectedSector?.let {
             canvas.drawArc(pieChartContainer, it.startAngle, it.sweepAngle, true, blackPaint)
         }
     }
@@ -124,7 +126,7 @@ class PieChartView @JvmOverloads constructor(
     @Suppress("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (GeometryHelper.isClickInsidePieChart(event, pieChartContainer)) {
-            selectedAngle = getSelectedAngle(event)
+            selectedSector = getSelectedAngle(event)
             invalidate()
         }
 
@@ -142,5 +144,30 @@ class PieChartView @JvmOverloads constructor(
             }
         }
         return null
+    }
+
+    private val superStateKey = "superState"
+    private val selectedCategoryKey = "selectedCategoryKey"
+
+    override fun onSaveInstanceState(): Parcelable {
+        val superState = super.onSaveInstanceState()
+        val bundle = Bundle()
+        bundle.putParcelable(superStateKey, superState)
+
+        selectedSector?.let {
+            bundle.putInt(selectedCategoryKey, it.id)
+        }
+        return bundle
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable) {
+        val bundle = state as Bundle
+        super.onRestoreInstanceState(bundle.getParcelable(superStateKey))
+        val selectedCategory = bundle.getInt(selectedCategoryKey, SELECTED_CATEGORY_NOT_FOUND)
+        selectedSector = angles.find { it.id == selectedCategory }
+    }
+
+    companion object {
+        private const val SELECTED_CATEGORY_NOT_FOUND = -1
     }
 }
