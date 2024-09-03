@@ -45,29 +45,15 @@ class PieChartView @JvmOverloads constructor(
     private val angles: MutableList<PieChartAngle> = mutableListOf()
 
     private var selectedSector: PieChartAngle? = null
+    private val angleCalculator = PieChartAngleCalculator()
+
 
     fun setPayloads(payloads: List<Payload>) {
         this.payloads = payloads
-        calculateAngles()
+        angles.clear()
+        angles.addAll(angleCalculator.calculateAngles(payloads))
         invalidate()
     }
-
-    private fun calculateAngles() {
-        angles.clear()
-        var startAngle = 0f
-        var endAngle = 0f
-        var color = PieChartColor.BLUE
-        for (payload in payloads) {
-            endAngle += getAngleForPayload(payload)
-            angles.add(PieChartAngle(payload.id, startAngle, endAngle, color))
-            startAngle = endAngle
-            color = color.nextColor()
-        }
-    }
-
-    private fun getAngleForPayload(payload: Payload): Float = (payload.amount.toFloat() / getTotalAmount()) * 360f
-
-    private fun getTotalAmount(): Int = payloads.sumOf { it.amount }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val widthMode = MeasureSpec.getMode(widthMeasureSpec)
