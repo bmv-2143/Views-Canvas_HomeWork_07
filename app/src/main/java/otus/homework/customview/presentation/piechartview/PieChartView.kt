@@ -48,7 +48,7 @@ class PieChartView @JvmOverloads constructor(
     private val angleCalculator = PieChartAngleCalculator()
     private val pieChartDrawer = PieChartDrawer(pieChartContainer, sectorPaint, selectionPaint)
 
-    private var onCategorySelected : ((Int) -> Unit)? = null
+    private var onCategorySelected : ((String) -> Unit)? = null
 
     fun setPayloads(payloads: List<Payload>) {
         this.payloads = payloads
@@ -57,7 +57,7 @@ class PieChartView @JvmOverloads constructor(
         invalidate()
     }
 
-    fun setSelectionListener(onCategorySelected: (Int) -> Unit) {
+    fun setSelectionListener(onCategorySelected: (String) -> Unit) {
         this.onCategorySelected = onCategorySelected
     }
 
@@ -94,7 +94,11 @@ class PieChartView @JvmOverloads constructor(
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (GeometryHelper.isClickInsidePieChart(event, pieChartContainer)) {
             selectedSector = getSelectedAngle(event)
-            onCategorySelected?.invoke(selectedSector?.id ?: -1)
+
+            selectedSector?.category?.let {
+                onCategorySelected?.invoke(it)
+            }
+
             invalidate()
         }
 
@@ -131,8 +135,8 @@ class PieChartView @JvmOverloads constructor(
     override fun onRestoreInstanceState(state: Parcelable) {
         val bundle = state as Bundle
         super.onRestoreInstanceState(bundle.getParcelable(superStateKey))
-        val selectedCategory = bundle.getInt(selectedCategoryKey, SELECTED_CATEGORY_NOT_FOUND)
-        selectedSector = angles.find { it.id == selectedCategory }
+        val selectedCategoryId = bundle.getInt(selectedCategoryKey, SELECTED_CATEGORY_NOT_FOUND)
+        selectedSector = angles.find { it.id == selectedCategoryId }
     }
 
     companion object {

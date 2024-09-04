@@ -6,6 +6,7 @@ import android.graphics.RectF
 
 data class PieChartAngle(
     val id: Int,
+    val category: String,
     val startAngle: Float,
     val endAngle: Float,
     val color: PieChartColor

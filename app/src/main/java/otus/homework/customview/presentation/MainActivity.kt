@@ -1,7 +1,7 @@
 package otus.homework.customview.presentation
 
 import android.os.Bundle
-import android.util.Log
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
@@ -10,7 +10,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import otus.homework.customview.databinding.ActivityMainBinding
-import otus.homework.customview.utils.TAG
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -39,8 +38,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setPayloadCategorySelectionListener() {
-        binding.pieChartView.setSelectionListener { selectedCategoryId ->
-            Log.d(TAG, "Selected category id: $selectedCategoryId")
+        binding.pieChartView.setSelectionListener { selectedCategory ->
+            Toast.makeText(this, selectedCategory, Toast.LENGTH_LONG).show()
+            binding.expensesGraphView.setPayloads(viewModel.payloads.value)
+            binding.expensesGraphView.setPayloadCategory(selectedCategory)
         }
     }
 }

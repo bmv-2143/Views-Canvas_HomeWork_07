@@ -8,6 +8,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import otus.homework.customview.data.Payload
+import otus.homework.customview.utils.DateUtils
 import otus.homework.customview.utils.TAG
 import otus.homework.customview.utils.dp
 import otus.homework.customview.utils.px
@@ -43,11 +44,42 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         style = Paint.Style.FILL
     }
 
-    private var payload: Payload? = null
+    private var payloads: List<Payload>? = null
+    private var payloadCategory: String? = null
 
-    fun setPayload(payload: Payload) {
-        this.payload = payload
+    private val payloadsPerCategory = mutableListOf<Payload>()
+
+    private val dateToExpenses = mutableMapOf<Int, Int>().withDefault { 0 }
+
+    fun setPayloads(payloads: List<Payload>) {
+        this.payloads = payloads
+    }
+
+    fun setPayloadCategory(payloadCategory: String) {
+        this.payloadCategory = payloadCategory
+        payloadsPerCategory.clear()
+        payloadsPerCategory.addAll(getPayloads(payloadCategory))
+
+        initDayToExpenses()
+
         invalidate()
+    }
+
+    private fun initDayToExpenses() {
+
+        for (i in 0..31) {
+            dateToExpenses[i] = 0
+        }
+
+        for (payload in payloadsPerCategory) {
+            val day: Int = DateUtils.timestampToDayOfMonth(payload.time)
+            val amount = payload.amount
+            dateToExpenses[day] = dateToExpenses.getValue(day) + amount
+        }
+    }
+
+    fun getPayloads(category: String): List<Payload> {
+        return payloads?.filter { it.category == category } ?: emptyList()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -89,6 +121,41 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         drawTicksOnYAxis(canvas)
         drawAxis(canvas)
         drawDotsAtTickIntersections(canvas)
+
+        drawPurchaseDots(canvas)
+    }
+
+    private fun drawPurchaseDots(canvas: Canvas) {
+        for ((day, amount) in dateToExpenses) {
+            val x = day.toFloat()
+            val y = mapAmountToYAxis(amount.toFloat())
+            canvas.drawCircle(axisToScreenX(x), axisToScreenY(y), 15f, Paint().apply {
+                color = if (amount == 0) Color.GREEN else Color.RED
+                style = Paint.Style.FILL
+            })
+        }
+    }
+
+    fun mapAmountToYAxis(currentAmount: Float): Float {
+        // Step 1: Find the maximum amount in the payloads list
+        val maxAmount: Float = payloads?.maxOfOrNull { it.amount.toFloat() } ?: 0f
+
+        // Step 2: Calculate the scale factor
+        val scaleFactor = axisYMaxValue / maxAmount
+
+        // Step 3: Map each amount to the y-axis using the scale factor
+        return currentAmount * scaleFactor
+    }
+
+    fun mapAmountToYAxis(payloads: List<Payload>): List<Float> {
+        // Step 1: Find the maximum amount in the payloads list
+        val maxAmount: Float = payloads.maxOfOrNull { it.amount.toFloat() } ?: 0f
+
+        // Step 2: Calculate the scale factor
+        val scaleFactor = axisYMaxValue / maxAmount
+
+        // Step 3: Map each amount to the y-axis using the scale factor
+        return payloads.map { it.amount * scaleFactor }
     }
 
     private fun drawAxis(canvas: Canvas) {
@@ -195,7 +262,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         }
     }
 
-    private fun calculateGridDotsX() : MutableList<Float> {
+    private fun calculateGridDotsX(): MutableList<Float> {
         val xTickPositions = mutableListOf<Float>()
         val xAxisXPos = (width - axisPaddingPx).toFloat()
         val tickStepX = (xAxisXPos - axisPaddingPx) / tickCountX
@@ -207,7 +274,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         return xTickPositions
     }
 
-    private fun calculateGridDotsY() : MutableList<Float> {
+    private fun calculateGridDotsY(): MutableList<Float> {
         val yTickPositions = mutableListOf<Float>()
         val yAxisYPos = (height - axisPaddingPx).toFloat()
         val tickStepY = (yAxisYPos - axisPaddingPx) / tickCountY
@@ -221,4 +288,5 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
 
 
     private data class Point(val x: Float, val y: Float)
+
 }

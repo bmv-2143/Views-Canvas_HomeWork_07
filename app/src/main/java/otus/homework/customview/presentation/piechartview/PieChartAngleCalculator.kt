@@ -12,7 +12,7 @@ class PieChartAngleCalculator {
         val totalAmount = getTotalAmount(payloads)
         for (payload in payloads) {
             endAngle += getAngleForPayload(payload, totalAmount)
-            angles.add(PieChartAngle(payload.id, startAngle, endAngle, color))
+            angles.add(PieChartAngle(payload.id, payload.category, startAngle, endAngle, color))
             startAngle = endAngle
             color = color.nextColor()
         }
