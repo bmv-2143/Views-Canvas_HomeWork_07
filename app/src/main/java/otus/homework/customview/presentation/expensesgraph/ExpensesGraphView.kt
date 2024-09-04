@@ -186,7 +186,16 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
     }
 
     private fun drawDotsAtTickIntersections(canvas: Canvas) {
-        // Calculate tick positions on X axis
+        val gridDotsX = calculateGridDotsX()
+        val gridDotsY = calculateGridDotsY()
+        for (x in gridDotsX) {
+            for (y in gridDotsY) {
+                canvas.drawCircle(x, y, gridDotSizePx.toFloat(), gridDotPaint)
+            }
+        }
+    }
+
+    private fun calculateGridDotsX() : MutableList<Float> {
         val xTickPositions = mutableListOf<Float>()
         val xAxisXPos = (width - axisPaddingPx).toFloat()
         val tickStepX = (xAxisXPos - axisPaddingPx) / tickCountX
@@ -195,8 +204,10 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
             xTickPositions.add(currentX)
             currentX += tickStepX
         }
+        return xTickPositions
+    }
 
-        // Calculate tick positions on Y axis
+    private fun calculateGridDotsY() : MutableList<Float> {
         val yTickPositions = mutableListOf<Float>()
         val yAxisYPos = (height - axisPaddingPx).toFloat()
         val tickStepY = (yAxisYPos - axisPaddingPx) / tickCountY
@@ -205,15 +216,8 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
             yTickPositions.add(currentY)
             currentY -= tickStepY
         }
-
-        // Draw dots at intersections of X and Y tick positions
-        for (x in xTickPositions) {
-            for (y in yTickPositions) {
-                canvas.drawCircle(x, y, gridDotSizePx.toFloat(), gridDotPaint)
-            }
-        }
+        return yTickPositions
     }
-
 
 
     private data class Point(val x: Float, val y: Float)
