@@ -14,6 +14,7 @@ import otus.homework.customview.utils.DateUtils
 import otus.homework.customview.utils.TAG
 import otus.homework.customview.utils.dp
 import otus.homework.customview.utils.px
+import otus.homework.customview.utils.sp
 import kotlin.math.min
 
 class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, attrs) {
@@ -57,6 +58,13 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         strokeWidth = 5f
         style = Paint.Style.STROKE
         pathEffect = DashPathEffect(floatArrayOf(10f, 20f), 0f)
+    }
+
+    private val amountTextPaint = Paint().apply {
+        color = Color.BLACK
+        textSize = 16.sp.px.toFloat()
+        style = Paint.Style.FILL_AND_STROKE
+        strokeWidth = 4f
     }
 
     private var payloads: List<Payload>? = null
@@ -142,6 +150,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         drawGraph(canvas)
         drawDashedLinesThroughGraphPeaksPoints(canvas)
         drawPurchaseDots(canvas)
+        drawTextAboveDashedLines(canvas)
     }
 
     private fun drawPurchaseDots(canvas: Canvas) {
@@ -170,6 +179,24 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
                     (width - axisPaddingPx).toFloat(),
                     screenY,
                     dashedLinePaint
+                )
+            }
+        }
+    }
+
+    private fun drawTextAboveDashedLines(canvas: Canvas) {
+        for ((_, amount) in dateToExpenses) {
+            if (amount != 0) {
+                val y = mapAmountToYAxis(amount.toFloat())
+                val screenY = axisToScreenY(y)
+                val text = amount.toString()
+                val axisYRightOffset = 30
+                val dashedLineAboveOffset = 20
+                canvas.drawText(
+                    text,
+                    axisPaddingPx.toFloat() + axisYRightOffset,
+                    screenY - dashedLineAboveOffset,
+                    amountTextPaint
                 )
             }
         }
