@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
@@ -44,12 +45,20 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         style = Paint.Style.FILL
     }
 
+    private val graphPaint = Paint().apply {
+        color = Color.GREEN
+        strokeWidth = 10f
+        style = Paint.Style.STROKE
+    }
+
     private var payloads: List<Payload>? = null
     private var payloadCategory: String? = null
 
     private val payloadsPerCategory = mutableListOf<Payload>()
 
     private val dateToExpenses = mutableMapOf<Int, Int>().withDefault { 0 }
+
+    private val graphPath = Path()
 
     fun setPayloads(payloads: List<Payload>) {
         this.payloads = payloads
@@ -122,6 +131,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         drawAxis(canvas)
         drawDotsAtTickIntersections(canvas)
 
+        drawGraph(canvas)
         drawPurchaseDots(canvas)
     }
 
@@ -129,11 +139,27 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         for ((day, amount) in dateToExpenses) {
             val x = day.toFloat()
             val y = mapAmountToYAxis(amount.toFloat())
-            canvas.drawCircle(axisToScreenX(x), axisToScreenY(y), 15f, Paint().apply {
-                color = if (amount == 0) Color.GREEN else Color.RED
-                style = Paint.Style.FILL
-            })
+
+            if (amount != 0) {
+                canvas.drawCircle(axisToScreenX(x), axisToScreenY(y), 15f, Paint().apply {
+                    color = Color.RED
+                    style = Paint.Style.FILL
+                })
+            }
+
         }
+    }
+
+    private fun drawGraph(canvas: Canvas) {
+        graphPath.reset()
+        graphPath.moveTo(axisToScreenX(0f), axisToScreenY(0f))
+
+        for ((day, amount) in dateToExpenses) {
+            val x = day.toFloat()
+            val y = mapAmountToYAxis(amount.toFloat())
+            graphPath.lineTo(axisToScreenX(x), axisToScreenY(y))
+        }
+        canvas.drawPath(graphPath, graphPaint)
     }
 
     fun mapAmountToYAxis(currentAmount: Float): Float {
