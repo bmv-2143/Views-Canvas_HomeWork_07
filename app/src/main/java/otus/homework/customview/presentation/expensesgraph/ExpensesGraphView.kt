@@ -3,6 +3,7 @@ package otus.homework.customview.presentation.expensesgraph
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
@@ -19,7 +20,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
 
     private val defaultWidthPx = 300.dp.px
     private val defaultHeightPx = 300.dp.px
-    private val axisPaddingPx = 16.dp.px
+    private val axisPaddingPx = 32.dp.px
     private val axisTickHeightPx = 10.dp.px
     private val tickCountX = 10
     private val tickCountY = 5
@@ -49,6 +50,13 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         color = Color.GREEN
         strokeWidth = 10f
         style = Paint.Style.STROKE
+    }
+
+    private val dashedLinePaint = Paint().apply {
+        color = Color.BLUE
+        strokeWidth = 5f
+        style = Paint.Style.STROKE
+        pathEffect = DashPathEffect(floatArrayOf(10f, 20f), 0f)
     }
 
     private var payloads: List<Payload>? = null
@@ -132,6 +140,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         drawDotsAtTickIntersections(canvas)
 
         drawGraph(canvas)
+        drawDashedLinesThroughGraphPeaksPoints(canvas)
         drawPurchaseDots(canvas)
     }
 
@@ -147,6 +156,22 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
                 })
             }
 
+        }
+    }
+
+    private fun drawDashedLinesThroughGraphPeaksPoints(canvas: Canvas) {
+        for ((_, amount) in dateToExpenses) {
+            if (amount != 0) {
+                val y = mapAmountToYAxis(amount.toFloat())
+                val screenY = axisToScreenY(y)
+                canvas.drawLine(
+                    axisPaddingPx.toFloat(),
+                    screenY,
+                    (width - axisPaddingPx).toFloat(),
+                    screenY,
+                    dashedLinePaint
+                )
+            }
         }
     }
 
