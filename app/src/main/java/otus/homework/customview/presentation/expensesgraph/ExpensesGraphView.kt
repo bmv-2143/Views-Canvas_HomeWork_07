@@ -11,7 +11,6 @@ import android.os.Parcelable
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
-import otus.homework.customview.data.Payload
 import otus.homework.customview.utils.TAG
 import otus.homework.customview.utils.dp
 import otus.homework.customview.utils.px
@@ -29,7 +28,6 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
     private val tickCountX = 10
     private val tickCountY = 5
     private val axisYMaxValue = 10f
-    private val axisXMaxValue = 31f
     private val gridDotSizePx = 2.dp.px
 
     private val axisPaint = Paint().apply {
@@ -75,7 +73,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
 
     private val graphPath = Path()
 
-    fun setMaxDailyExpenseOfAllCategories(maxCategoryTotalAmount : Int) {
+    fun setMaxDailyExpenseOfAllCategories(maxCategoryTotalAmount: Int) {
         this.maxCategoryTotalAmount = maxCategoryTotalAmount
     }
 
@@ -142,7 +140,6 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
                     style = Paint.Style.FILL
                 })
             }
-
         }
     }
 
@@ -192,26 +189,10 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         canvas.drawPath(graphPath, graphPaint)
     }
 
-    fun mapAmountToYAxis(currentAmount: Float): Float {
-        // Step 1: Find the maximum amount in the payloads list
+    private fun mapAmountToYAxis(currentAmount: Float): Float {
         val maxAmount: Float = maxCategoryTotalAmount.toFloat()
-
-        // Step 2: Calculate the scale factor
         val scaleFactor = axisYMaxValue / maxAmount
-
-        // Step 3: Map each amount to the y-axis using the scale factor
         return currentAmount * scaleFactor
-    }
-
-    fun mapAmountToYAxis(payloads: List<Payload>): List<Float> {
-        // Step 1: Find the maximum amount in the payloads list
-        val maxAmount: Float = payloads.maxOfOrNull { it.amount.toFloat() } ?: 0f
-
-        // Step 2: Calculate the scale factor
-        val scaleFactor = axisYMaxValue / maxAmount
-
-        // Step 3: Map each amount to the y-axis using the scale factor
-        return payloads.map { it.amount * scaleFactor }
     }
 
     private fun drawAxis(canvas: Canvas) {
@@ -260,25 +241,6 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         canvas.drawLine(tickX, tickStartY, tickX + tickHeight, tickStartY, axisTickPaint)
     }
 
-    private fun axisToScreenCoordinates(
-        axisX: Float,
-        axisY: Float,
-        maxXValue: Float = 31f,
-        maxYValue: Float = 10f
-    ): Point {
-
-        val drawableWidth = width - 2 * axisPaddingPx
-        val drawableHeight = height - 2 * axisPaddingPx
-
-        val xScaleFactor = drawableWidth / maxXValue
-        val yScaleFactor = drawableHeight / maxYValue
-
-        val screenX = axisPaddingPx + axisX * xScaleFactor
-        val screenY = height - axisPaddingPx - axisY * yScaleFactor
-
-        return Point(screenX, screenY)
-    }
-
     private fun axisToScreenX(axisX: Float, maxXValue: Float = 31f): Float {
         val drawableWidth = width - 2 * axisPaddingPx
         val xScaleFactor = drawableWidth / maxXValue
@@ -289,23 +251,6 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         val drawableHeight = height - 2 * axisPaddingPx
         val yScaleFactor = drawableHeight / maxYValue
         return height - axisPaddingPx - axisY * yScaleFactor
-    }
-
-    fun drawDots(canvas: Canvas, xStep: Float, yStep: Float, paint: Paint) {
-        val maxX = axisXMaxValue
-        val maxY = axisYMaxValue
-
-        var x = 0f
-        while (x <= maxX) {
-            var y = 0f
-            while (y <= maxY) {
-                val screenX = axisToScreenX(x, maxX)
-                val screenY = axisToScreenY(y, maxY)
-                canvas.drawPoint(screenX, screenY, paint)
-                y += yStep
-            }
-            x += xStep
-        }
     }
 
     private fun drawDotsAtTickIntersections(canvas: Canvas) {
@@ -346,15 +291,12 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
     private val selectedCategoryKey = "dayToExpensesKey"
     private val maxCategoryTotalAmountKey = "maxCategoryTotalAmountKey"
 
-
     override fun onSaveInstanceState(): Parcelable {
         val superState = super.onSaveInstanceState()
         val bundle = Bundle()
         bundle.putParcelable(superStateKey, superState)
-
         bundle.putInt(maxCategoryTotalAmountKey, maxCategoryTotalAmount)
         bundle.putBundle(selectedCategoryKey, dayToExpenses.toBundle())
-
         return bundle
     }
 
@@ -367,15 +309,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         if (dayToExpensesBundle != null) {
             dayToExpenses.putAll(dayToExpensesBundle.toMap())
         }
-
         maxCategoryTotalAmount = bundle.getInt(maxCategoryTotalAmountKey)
-
-        Log.e(TAG, "onRestoreInstanceState: $dayToExpenses")
-
         invalidate()
     }
-
-
-    private data class Point(val x: Float, val y: Float)
-
 }
