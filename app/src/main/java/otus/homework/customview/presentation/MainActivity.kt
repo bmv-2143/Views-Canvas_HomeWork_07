@@ -23,15 +23,15 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        observePayloads()
+        observePieChartAngles()
         setPayloadCategorySelectionListener()
     }
 
-    private fun observePayloads() {
+    private fun observePieChartAngles() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.payloads.collect {
-                    binding.pieChartView.setPayloads(it)
+                viewModel.pieChartAngles.collect {
+                    binding.pieChartView.setPieChartAngles(it)
                 }
             }
         }
