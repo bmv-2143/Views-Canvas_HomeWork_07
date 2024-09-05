@@ -40,8 +40,9 @@ class MainActivity : AppCompatActivity() {
     private fun setPayloadCategorySelectionListener() {
         binding.pieChartView.setSelectionListener { selectedCategory ->
             Toast.makeText(this, selectedCategory, Toast.LENGTH_LONG).show()
-            binding.expensesGraphView.setPayloads(viewModel.payloads.value)
-            binding.expensesGraphView.setPayloadCategory(selectedCategory)
+
+            binding.expensesGraphView.setMaxDailyExpenseOfAllCategories(viewModel.getMaxDailyExpenseOfAllCategories())
+            binding.expensesGraphView.setDaysToExpenses(viewModel.getDaysToExpenses(selectedCategory))
         }
     }
 }
