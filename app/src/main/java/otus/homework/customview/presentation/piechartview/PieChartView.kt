@@ -47,9 +47,9 @@ class PieChartView @JvmOverloads constructor(
     private var selectedSector: PieChartAngle? = null
     private val pieChartDrawer = PieChartDrawer(pieChartContainer, sectorPaint, selectionPaint)
 
-    private var onCategorySelected : ((String) -> Unit)? = null
+    private var onCategorySelected: ((String) -> Unit)? = null
 
-    fun setPieChartAngles(angles : List<PieChartAngle>) {
+    fun setPieChartAngles(angles: List<PieChartAngle>) {
         this.angles.clear()
         this.angles.addAll(angles)
         invalidate()
@@ -93,18 +93,15 @@ class PieChartView @JvmOverloads constructor(
         if (GeometryHelper.isClickInsidePieChart(event, pieChartContainer)) {
             selectedSector = getSelectedAngle(event)
 
-            selectedSector?.category?.let {
-                onCategorySelected?.invoke(it)
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                selectedSector?.category?.let {
+                    onCategorySelected?.invoke(it)
+                    invalidate()
+                    return true
+                }
             }
-
-            invalidate()
         }
-
-        if (event.action == MotionEvent.ACTION_UP) {
-            return super.performClick()
-        }
-
-        return true
+        return false
     }
 
     private fun getSelectedAngle(event: MotionEvent): PieChartAngle? {
