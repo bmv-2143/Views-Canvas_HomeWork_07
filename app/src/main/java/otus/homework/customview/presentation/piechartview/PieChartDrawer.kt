@@ -16,11 +16,10 @@ class PieChartDrawer(
         val centerX = view.width / 2
         val centerY = view.height / 2
         val pieChartSizeWithPadding = view.measuredWidth - pieChartPaddingPx
-        val left = centerX - pieChartSizeWithPadding / 2
-        val top = centerY - pieChartSizeWithPadding / 2
-        val right = centerX + pieChartSizeWithPadding / 2
-        val bottom = centerY + pieChartSizeWithPadding / 2
-        pieChartContainer.set(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
+        pieChartContainer.left = (centerX - pieChartSizeWithPadding / 2).toFloat()
+        pieChartContainer.top = (centerY - pieChartSizeWithPadding / 2).toFloat()
+        pieChartContainer.right = (centerX + pieChartSizeWithPadding / 2).toFloat()
+        pieChartContainer.bottom = (centerY + pieChartSizeWithPadding / 2).toFloat()
     }
 
     fun drawPieChart(canvas: Canvas, angles: List<PieChartAngle>) {
