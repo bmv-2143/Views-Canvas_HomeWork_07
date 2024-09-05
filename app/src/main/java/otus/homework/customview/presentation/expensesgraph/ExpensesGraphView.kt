@@ -6,6 +6,8 @@ import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Path
+import android.os.Bundle
+import android.os.Parcelable
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
@@ -15,6 +17,8 @@ import otus.homework.customview.utils.TAG
 import otus.homework.customview.utils.dp
 import otus.homework.customview.utils.px
 import otus.homework.customview.utils.sp
+import otus.homework.customview.utils.toBundle
+import otus.homework.customview.utils.toMap
 import kotlin.math.min
 
 class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, attrs) {
@@ -72,39 +76,59 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
 
     private val payloadsPerCategory = mutableListOf<Payload>()
 
-    private val dateToExpenses = mutableMapOf<Int, Int>().withDefault { 0 }
+    private val dayToExpenses = mutableMapOf<Int, Int>().withDefault { 0 }
+    private var maxCategoryTotalAmount = 0
 
     private val graphPath = Path()
 
     fun setPayloads(payloads: List<Payload>) {
         this.payloads = payloads
+        val categoryToMaxDailyExpenses = getMaxDailyExpenseForAllCategories(payloads)
+        maxCategoryTotalAmount = categoryToMaxDailyExpenses.maxOf { it.value }
+
     }
 
     fun setPayloadCategory(payloadCategory: String) {
         this.payloadCategory = payloadCategory
         payloadsPerCategory.clear()
         payloadsPerCategory.addAll(getPayloads(payloadCategory))
-
         initDayToExpenses()
-
         invalidate()
     }
 
     private fun initDayToExpenses() {
-
         for (i in 0..31) {
-            dateToExpenses[i] = 0
+            dayToExpenses[i] = 0
         }
 
         for (payload in payloadsPerCategory) {
             val day: Int = DateUtils.timestampToDayOfMonth(payload.time)
             val amount = payload.amount
-            dateToExpenses[day] = dateToExpenses.getValue(day) + amount
+            dayToExpenses[day] = dayToExpenses.getValue(day) + amount
         }
     }
 
     fun getPayloads(category: String): List<Payload> {
         return payloads?.filter { it.category == category } ?: emptyList()
+    }
+
+    fun getMaxDailyExpenseForAllCategories(payloads: List<Payload>): Map<String, Int> {
+        val categoryToDayToExpenses = mutableMapOf<String, MutableMap<Int, Int>>().withDefault { mutableMapOf() }
+
+        for (payload in payloads) {
+            val category = payload.category
+            val day = DateUtils.timestampToDayOfMonth(payload.time)
+            val dayToExpenses = categoryToDayToExpenses.getOrPut(category) { mutableMapOf() }.withDefault { 0 }
+            dayToExpenses[day] = dayToExpenses.getValue(day) + payload.amount
+            categoryToDayToExpenses[category] = dayToExpenses
+        }
+
+        val categoryToMaxDailyExpense = mutableMapOf<String, Int>()
+        for ((category, dayToExpenses) in categoryToDayToExpenses) {
+            categoryToMaxDailyExpense[category] = dayToExpenses.values.maxOrNull() ?: 0
+        }
+
+        return categoryToMaxDailyExpense
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -154,7 +178,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
     }
 
     private fun drawPurchaseDots(canvas: Canvas) {
-        for ((day, amount) in dateToExpenses) {
+        for ((day, amount) in dayToExpenses) {
             val x = day.toFloat()
             val y = mapAmountToYAxis(amount.toFloat())
 
@@ -169,7 +193,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
     }
 
     private fun drawDashedLinesThroughGraphPeaksPoints(canvas: Canvas) {
-        for ((_, amount) in dateToExpenses) {
+        for ((_, amount) in dayToExpenses) {
             if (amount != 0) {
                 val y = mapAmountToYAxis(amount.toFloat())
                 val screenY = axisToScreenY(y)
@@ -185,7 +209,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
     }
 
     private fun drawTextAboveDashedLines(canvas: Canvas) {
-        for ((_, amount) in dateToExpenses) {
+        for ((_, amount) in dayToExpenses) {
             if (amount != 0) {
                 val y = mapAmountToYAxis(amount.toFloat())
                 val screenY = axisToScreenY(y)
@@ -206,7 +230,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         graphPath.reset()
         graphPath.moveTo(axisToScreenX(0f), axisToScreenY(0f))
 
-        for ((day, amount) in dateToExpenses) {
+        for ((day, amount) in dayToExpenses) {
             val x = day.toFloat()
             val y = mapAmountToYAxis(amount.toFloat())
             graphPath.lineTo(axisToScreenX(x), axisToScreenY(y))
@@ -216,7 +240,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
 
     fun mapAmountToYAxis(currentAmount: Float): Float {
         // Step 1: Find the maximum amount in the payloads list
-        val maxAmount: Float = payloads?.maxOfOrNull { it.amount.toFloat() } ?: 0f
+        val maxAmount: Float = maxCategoryTotalAmount.toFloat()
 
         // Step 2: Calculate the scale factor
         val scaleFactor = axisYMaxValue / maxAmount
@@ -362,6 +386,39 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
             currentY -= tickStepY
         }
         return yTickPositions
+    }
+
+    private val superStateKey = "superState"
+    private val selectedCategoryKey = "dayToExpensesKey"
+    private val maxCategoryTotalAmountKey = "maxCategoryTotalAmountKey"
+
+
+    override fun onSaveInstanceState(): Parcelable {
+        val superState = super.onSaveInstanceState()
+        val bundle = Bundle()
+        bundle.putParcelable(superStateKey, superState)
+
+        bundle.putInt(maxCategoryTotalAmountKey, maxCategoryTotalAmount)
+        bundle.putBundle(selectedCategoryKey, dayToExpenses.toBundle())
+
+        return bundle
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable) {
+        val bundle = state as Bundle
+        super.onRestoreInstanceState(bundle.getParcelable(superStateKey))
+
+        // Restore dayToExpenses map
+        val dayToExpensesBundle = bundle.getBundle(selectedCategoryKey)
+        if (dayToExpensesBundle != null) {
+            dayToExpenses.putAll(dayToExpensesBundle.toMap())
+        }
+
+        maxCategoryTotalAmount = bundle.getInt(maxCategoryTotalAmountKey)
+
+        Log.e(TAG, "onRestoreInstanceState: $dayToExpenses")
+
+        invalidate()
     }
 
 
