@@ -2,15 +2,16 @@ package otus.homework.customview.presentation.expensesgraph
 
 import otus.homework.customview.data.Payload
 import otus.homework.customview.utils.DateUtils
+import javax.inject.Inject
 
-object GraphCalculator {
+class GraphCalculator @Inject constructor(private val dateUtils: DateUtils) {
 
     fun getMaxDailyExpenseOfAllCategories(payloads: List<Payload>): Int {
         val categoryToDayToExpenses = mutableMapOf<String, MutableMap<Int, Int>>().withDefault { mutableMapOf() }
 
         for (payload in payloads) {
             val category = payload.category
-            val day = DateUtils.timestampToDayOfMonth(payload.time)
+            val day = dateUtils.timestampToDayOfMonth(payload.time)
             val dayToExpenses = categoryToDayToExpenses.getOrPut(category) { mutableMapOf() }.withDefault { 0 }
             dayToExpenses[day] = dayToExpenses.getValue(day) + payload.amount
             categoryToDayToExpenses[category] = dayToExpenses
@@ -20,8 +21,6 @@ object GraphCalculator {
         for ((category, dayToExpenses) in categoryToDayToExpenses) {
             categoryToMaxDailyExpense[category] = dayToExpenses.values.maxOrNull() ?: 0
         }
-
         return categoryToMaxDailyExpense.maxOf { it.value }
     }
-
 }

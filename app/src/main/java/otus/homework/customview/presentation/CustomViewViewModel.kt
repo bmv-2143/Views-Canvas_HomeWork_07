@@ -19,7 +19,9 @@ import javax.inject.Inject
 @HiltViewModel
 class CustomViewViewModel @Inject constructor(
     private val repository: CustomViewRepository,
-    dataLoadDispatcher: CoroutineDispatcher
+    private val dateUtils: DateUtils,
+    private val graphCalculator: GraphCalculator,
+    dataLoadDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private lateinit var _payloads: List<Payload>
@@ -35,18 +37,18 @@ class CustomViewViewModel @Inject constructor(
     }
 
     fun getMaxDailyExpenseOfAllCategories(): Int {
-        return GraphCalculator.getMaxDailyExpenseOfAllCategories(_payloads)
+        return graphCalculator.getMaxDailyExpenseOfAllCategories(_payloads)
     }
 
     fun getDaysToExpenses(payloadCategory: String): Map<Int, Int> {
         val daysToExpenses = mutableMapOf<Int, Int>().withDefault { 0 }
 
-        for (i in 0..31) {
+        for (i in 0..MAX_DAYS) {
             daysToExpenses[i] = 0
         }
 
         for (payload in getPayloadsForCategory(payloadCategory)) {
-            val day: Int = DateUtils.timestampToDayOfMonth(payload.time)
+            val day: Int = dateUtils.timestampToDayOfMonth(payload.time)
             val amount = payload.amount
             daysToExpenses[day] = daysToExpenses.getValue(day) + amount
         }
@@ -56,6 +58,10 @@ class CustomViewViewModel @Inject constructor(
 
     private fun getPayloadsForCategory(category: String): List<Payload> {
         return _payloads.filter { it.category == category }
+    }
+
+    companion object {
+        private const val MAX_DAYS = 31
     }
 }
 

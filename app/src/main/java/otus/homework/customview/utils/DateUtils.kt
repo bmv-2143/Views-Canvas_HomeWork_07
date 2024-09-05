@@ -2,30 +2,23 @@ package otus.homework.customview.utils
 
 import java.util.Calendar
 import java.util.Date
+import javax.inject.Inject
 
-object DateUtils {
+class DateUtils @Inject constructor() {
 
     fun timestampToDayOfMonth(timestamp: Long): Int {
         val calendar = getCalendar(timestamp)
-        return calendar.get(Calendar.DAY_OF_MONTH)
+        return calendar[Calendar.DAY_OF_MONTH]
     }
 
-    fun getCalendar(payloadTimestamp: Long): Calendar {
-        val date = Date(payloadTimestamp * 1000) // Convert seconds to milliseconds
+    private fun getCalendar(payloadTimestamp: Long): Calendar {
+        val date = Date(payloadTimestamp * MILLIS_IN_SECOND)
         val calendar = Calendar.getInstance()
         calendar.time = date
         return calendar
     }
 
-    fun getHumanReadableDate(calendar: Calendar): String {
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH) + 1 // Months are 0-based in Calendar
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-        val minute = calendar.get(Calendar.MINUTE)
-        val second = calendar.get(Calendar.SECOND)
-
-        return String.format("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
+    companion object {
+        private const val MILLIS_IN_SECOND = 1000
     }
-
 }
