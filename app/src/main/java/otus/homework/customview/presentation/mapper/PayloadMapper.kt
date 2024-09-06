@@ -1,6 +1,8 @@
-package otus.homework.customview.presentation.model
+package otus.homework.customview.presentation.mapper
 
 import otus.homework.customview.data.Payload
+import otus.homework.customview.presentation.model.PieChartAngle
+import otus.homework.customview.presentation.model.PieChartColor
 
 fun List<Payload>.toPieChartAngles() : List<PieChartAngle> {
     val angles = mutableListOf<PieChartAngle>()

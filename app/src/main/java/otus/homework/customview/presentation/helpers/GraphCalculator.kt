@@ -1,4 +1,4 @@
-package otus.homework.customview.presentation.expensesgraph
+package otus.homework.customview.presentation.helpers
 
 import otus.homework.customview.data.Payload
 import otus.homework.customview.utils.DateUtils

@@ -10,9 +10,9 @@ import kotlinx.coroutines.launch
 import otus.homework.customview.R
 import otus.homework.customview.data.CustomViewRepository
 import otus.homework.customview.data.Payload
-import otus.homework.customview.presentation.expensesgraph.GraphCalculator
+import otus.homework.customview.presentation.helpers.GraphCalculator
 import otus.homework.customview.presentation.model.PieChartAngle
-import otus.homework.customview.presentation.model.toPieChartAngles
+import otus.homework.customview.presentation.mapper.toPieChartAngles
 import otus.homework.customview.utils.DateUtils
 import javax.inject.Inject
 
