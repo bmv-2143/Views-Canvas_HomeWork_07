@@ -21,26 +21,28 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
 
     private val dayToExpenses = mutableMapOf<Int, Int>().withDefault { 0 }
     private var maxCategoryTotalAmount = 0
-    private var graphDrawer : GraphDrawer? = null
+    private var graphDrawer: GraphDrawer? = null
+    private var axisDrawer: AxisDrawer? = null
 
     fun setMaxDailyExpenseOfAllCategories(maxCategoryTotalAmount: Int) {
         this.maxCategoryTotalAmount = maxCategoryTotalAmount
-        initGraphDrawer()
+        initDrawers()
     }
 
     fun setDaysToExpenses(dayToExpenses: Map<Int, Int>) {
         this.dayToExpenses.clear()
         this.dayToExpenses.putAll(dayToExpenses)
-        initGraphDrawer()
+        initDrawers()
         invalidate()
     }
 
-    private fun initGraphDrawer() {
+    private fun initDrawers() {
         graphDrawer = GraphDrawer(
             this,
             maxCategoryTotalAmount = maxCategoryTotalAmount,
             daysToExpenses = dayToExpenses,
         )
+        axisDrawer = AxisDrawer(this)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -78,12 +80,14 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
     }
 
     override fun onDraw(canvas: Canvas) {
-        graphDrawer?.let {
+        axisDrawer?.let {
             it.drawTicksOnXAxis(canvas)
             it.drawTicksOnYAxis(canvas)
             it.drawAxis(canvas)
             it.drawDotsAtTickIntersections(canvas)
+        }
 
+        graphDrawer?.let {
             it.drawGraph(canvas)
             it.drawDashedLinesThroughGraphPeaksPoints(canvas)
             it.drawPurchaseDots(canvas)
@@ -114,7 +118,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
             dayToExpenses.putAll(dayToExpensesBundle.toMap())
         }
         maxCategoryTotalAmount = bundle.getInt(maxCategoryTotalAmountKey)
-        initGraphDrawer()
+        initDrawers()
         invalidate()
     }
 }
