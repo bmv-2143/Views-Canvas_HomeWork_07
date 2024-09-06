@@ -5,10 +5,23 @@ import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Path
+import otus.homework.customview.utils.dp
 import otus.homework.customview.utils.px
 import otus.homework.customview.utils.sp
 
-class GraphDrawer(private val view: ExpensesGraphView) {
+class GraphDrawer(
+    private val view: ExpensesGraphView,
+    private val maxCategoryTotalAmount: Int,
+    private val daysToExpenses: Map<Int, Int>,
+) {
+
+    private val axisPaddingPx = 32.dp.px
+    private val axisTickHeightPx = 10.dp.px
+    private val tickCountX = 10
+    private val tickCountY = 5
+    private val axisYMaxValue = 10f
+    private val gridDotSizePx = 2.dp.px
+    private val graphPath = Path()
 
     private val axisPaint = Paint().apply {
         color = Color.BLACK
@@ -48,15 +61,13 @@ class GraphDrawer(private val view: ExpensesGraphView) {
         strokeWidth = 4f
     }
 
-    private val graphPath = Path()
-
     internal fun drawPurchaseDots(canvas: Canvas) {
-        for ((day, amount) in view.dayToExpenses) {
+        for ((day, amount) in daysToExpenses) {
             val x = day.toFloat()
-            val y = view.mapAmountToYAxis(amount.toFloat())
+            val y = mapAmountToYAxis(amount.toFloat())
 
             if (amount != 0) {
-                canvas.drawCircle(view.axisToScreenX(x), view.axisToScreenY(y), 15f, Paint().apply {
+                canvas.drawCircle(axisToScreenX(x), axisToScreenY(y), 15f, Paint().apply {
                     color = Color.RED
                     style = Paint.Style.FILL
                 })
@@ -65,14 +76,14 @@ class GraphDrawer(private val view: ExpensesGraphView) {
     }
 
     internal fun drawDashedLinesThroughGraphPeaksPoints(canvas: Canvas) {
-        for ((_, amount) in view.dayToExpenses) {
+        for ((_, amount) in daysToExpenses) {
             if (amount != 0) {
-                val y = view.mapAmountToYAxis(amount.toFloat())
-                val screenY = view.axisToScreenY(y)
+                val y = mapAmountToYAxis(amount.toFloat())
+                val screenY = axisToScreenY(y)
                 canvas.drawLine(
-                    view.axisPaddingPx.toFloat(),
+                    axisPaddingPx.toFloat(),
                     screenY,
-                    (view.width - view.axisPaddingPx).toFloat(),
+                    (view.width - axisPaddingPx).toFloat(),
                     screenY,
                     dashedLinePaint
                 )
@@ -81,16 +92,16 @@ class GraphDrawer(private val view: ExpensesGraphView) {
     }
 
     internal fun drawTextAboveDashedLines(canvas: Canvas) {
-        for ((_, amount) in view.dayToExpenses) {
+        for ((_, amount) in daysToExpenses) {
             if (amount != 0) {
-                val y = view.mapAmountToYAxis(amount.toFloat())
-                val screenY = view.axisToScreenY(y)
+                val y = mapAmountToYAxis(amount.toFloat())
+                val screenY = axisToScreenY(y)
                 val text = amount.toString()
                 val axisYRightOffset = 30
                 val dashedLineAboveOffset = 20
                 canvas.drawText(
                     text,
-                    view.axisPaddingPx.toFloat() + axisYRightOffset,
+                    axisPaddingPx.toFloat() + axisYRightOffset,
                     screenY - dashedLineAboveOffset,
                     amountTextPaint
                 )
@@ -100,37 +111,39 @@ class GraphDrawer(private val view: ExpensesGraphView) {
 
     internal fun drawGraph(canvas: Canvas) {
         graphPath.reset()
-        graphPath.moveTo(view.axisToScreenX(0f), view.axisToScreenY(0f))
+        graphPath.moveTo(axisToScreenX(0f), axisToScreenY(0f))
 
-        for ((day, amount) in view.dayToExpenses) {
+        for ((day, amount) in daysToExpenses) {
             val x = day.toFloat()
-            val y = view.mapAmountToYAxis(amount.toFloat())
-            graphPath.lineTo(view.axisToScreenX(x), view.axisToScreenY(y))
+            val y = mapAmountToYAxis(amount.toFloat())
+            graphPath.lineTo(axisToScreenX(x), axisToScreenY(y))
         }
         canvas.drawPath(graphPath, graphPaint)
     }
 
     internal fun drawAxis(canvas: Canvas) {
-        val xAxisYPos = (view.height - view.axisPaddingPx).toFloat()
-        canvas.drawLine(view.axisPaddingPx.toFloat(), xAxisYPos, (view.width - view.axisPaddingPx).toFloat(), xAxisYPos, axisPaint)
+        val xAxisYPos = (view.height - axisPaddingPx).toFloat()
         canvas.drawLine(
-            view.axisPaddingPx.toFloat(),
-            view.axisPaddingPx.toFloat(),
-            view.axisPaddingPx.toFloat(),
-            (view.height - view.axisPaddingPx).toFloat(),
+            axisPaddingPx.toFloat(), xAxisYPos, (view.width - axisPaddingPx).toFloat(), xAxisYPos, axisPaint
+        )
+        canvas.drawLine(
+            axisPaddingPx.toFloat(),
+            axisPaddingPx.toFloat(),
+            axisPaddingPx.toFloat(),
+            (view.height - axisPaddingPx).toFloat(),
             axisPaint
         )
     }
 
     internal fun drawTicksOnXAxis(canvas: Canvas) {
-        val xAxisYPos = (view.height - view.axisPaddingPx).toFloat()
-        val xAxisXPos = (view.width - view.axisPaddingPx).toFloat()
+        val xAxisYPos = (view.height - axisPaddingPx).toFloat()
+        val xAxisXPos = (view.width - axisPaddingPx).toFloat()
 
-        val tickStep = (xAxisXPos - view.axisPaddingPx) / view.tickCountX
-        var currentX: Float = view.axisPaddingPx.toFloat() + tickStep
+        val tickStep = (xAxisXPos - axisPaddingPx) / tickCountX
+        var currentX: Float = axisPaddingPx.toFloat() + tickStep
 
-        for (i in 0 until view.tickCountX) {
-            drawAxisXTick(canvas, currentX, xAxisYPos, view.axisTickHeightPx)
+        for (i in 0 until tickCountX) {
+            drawAxisXTick(canvas, currentX, xAxisYPos, axisTickHeightPx)
             currentX += tickStep
         }
     }
@@ -140,14 +153,14 @@ class GraphDrawer(private val view: ExpensesGraphView) {
     }
 
     internal fun drawTicksOnYAxis(canvas: Canvas) {
-        val yAxisXPos = view.axisPaddingPx.toFloat()
-        val yAxisYPos = (view.height - view.axisPaddingPx).toFloat()
+        val yAxisXPos = axisPaddingPx.toFloat()
+        val yAxisYPos = (view.height - axisPaddingPx).toFloat()
 
-        val tickStep = (yAxisYPos - view.axisPaddingPx) / view.tickCountY
+        val tickStep = (yAxisYPos - axisPaddingPx) / tickCountY
         var currentY: Float = yAxisYPos - tickStep
 
-        for (i in 0 until view.tickCountY) {
-            drawAxisYTick(canvas, yAxisXPos, currentY, view.axisTickHeightPx)
+        for (i in 0 until tickCountY) {
+            drawAxisYTick(canvas, yAxisXPos, currentY, axisTickHeightPx)
             currentY -= tickStep
         }
     }
@@ -161,17 +174,17 @@ class GraphDrawer(private val view: ExpensesGraphView) {
         val gridDotsY = calculateGridDotsY()
         for (x in gridDotsX) {
             for (y in gridDotsY) {
-                canvas.drawCircle(x, y, view.gridDotSizePx.toFloat(), gridDotPaint)
+                canvas.drawCircle(x, y, gridDotSizePx.toFloat(), gridDotPaint)
             }
         }
     }
 
     private fun calculateGridDotsX(): MutableList<Float> {
         val xTickPositions = mutableListOf<Float>()
-        val xAxisXPos = (view.width - view.axisPaddingPx).toFloat()
-        val tickStepX = (xAxisXPos - view.axisPaddingPx) / view.tickCountX
-        var currentX: Float = view.axisPaddingPx.toFloat() + tickStepX
-        for (i in 0 until view.tickCountX) {
+        val xAxisXPos = (view.width - axisPaddingPx).toFloat()
+        val tickStepX = (xAxisXPos - axisPaddingPx) / tickCountX
+        var currentX: Float = axisPaddingPx.toFloat() + tickStepX
+        for (i in 0 until tickCountX) {
             xTickPositions.add(currentX)
             currentX += tickStepX
         }
@@ -180,13 +193,31 @@ class GraphDrawer(private val view: ExpensesGraphView) {
 
     private fun calculateGridDotsY(): MutableList<Float> {
         val yTickPositions = mutableListOf<Float>()
-        val yAxisYPos = (view.height - view.axisPaddingPx).toFloat()
-        val tickStepY = (yAxisYPos - view.axisPaddingPx) / view.tickCountY
+        val yAxisYPos = (view.height - axisPaddingPx).toFloat()
+        val tickStepY = (yAxisYPos - axisPaddingPx) / tickCountY
         var currentY: Float = yAxisYPos - tickStepY
-        for (i in 0 until view.tickCountY) {
+        for (i in 0 until tickCountY) {
             yTickPositions.add(currentY)
             currentY -= tickStepY
         }
         return yTickPositions
+    }
+
+    private fun mapAmountToYAxis(currentAmount: Float): Float {
+        val maxAmount: Float = maxCategoryTotalAmount.toFloat()
+        val scaleFactor = axisYMaxValue / maxAmount
+        return currentAmount * scaleFactor
+    }
+
+    private fun axisToScreenX(axisX: Float, maxXValue: Float = 31f): Float {
+        val drawableWidth = view.width - 2 * axisPaddingPx
+        val xScaleFactor = drawableWidth / maxXValue
+        return axisPaddingPx + axisX * xScaleFactor
+    }
+
+    private fun axisToScreenY(axisY: Float, maxYValue: Float = 10f): Float {
+        val drawableHeight = view.height - 2 * axisPaddingPx
+        val yScaleFactor = drawableHeight / maxYValue
+        return view.height - axisPaddingPx - axisY * yScaleFactor
     }
 }
