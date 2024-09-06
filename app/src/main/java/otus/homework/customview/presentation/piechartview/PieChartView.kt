@@ -8,12 +8,10 @@ import android.graphics.RectF
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import otus.homework.customview.presentation.model.PieChartAngle
 import otus.homework.customview.presentation.piechartview.GeometryHelper.isClickWithinPieChartAngle
-import otus.homework.customview.utils.TAG
 import otus.homework.customview.utils.dp
 import otus.homework.customview.utils.px
 import kotlin.math.min
@@ -41,12 +39,9 @@ class PieChartView @JvmOverloads constructor(
     }
 
     private val pieChartContainer = RectF()
-
     private val angles: MutableList<PieChartAngle> = mutableListOf()
-
     private var selectedSector: PieChartAngle? = null
     private val pieChartDrawer = PieChartDrawer(pieChartContainer, sectorPaint, selectionPaint)
-
     private var onCategorySelected: ((String) -> Unit)? = null
 
     fun setPieChartAngles(angles: List<PieChartAngle>) {
