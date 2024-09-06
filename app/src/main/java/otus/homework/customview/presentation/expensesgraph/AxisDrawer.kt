@@ -11,9 +11,9 @@ class AxisDrawer(
 ) {
     private val axisPaddingPx = 32.dp.px
     private val axisTickHeightPx = 10.dp.px
+    private val gridDotSizePx = 2.dp.px
     private val tickCountX = 10
     private val tickCountY = 5
-    private val gridDotSizePx = 2.dp.px
 
     private val axisPaint = Paint().apply {
         color = Color.BLACK
@@ -54,15 +54,14 @@ class AxisDrawer(
         val tickStep = (xAxisXPos - axisPaddingPx) / tickCountX
         var currentX: Float = axisPaddingPx.toFloat() + tickStep
 
-        for (i in 0 until tickCountX) {
+        repeat(tickCountX) {
             drawAxisXTick(canvas, currentX, xAxisYPos, axisTickHeightPx)
             currentX += tickStep
         }
     }
 
-    private fun drawAxisXTick(canvas: Canvas, tickX: Float, tickStartY: Float, tickHeight: Int) {
+    private fun drawAxisXTick(canvas: Canvas, tickX: Float, tickStartY: Float, tickHeight: Int) =
         canvas.drawLine(tickX, tickStartY, tickX, tickStartY - tickHeight, axisTickPaint)
-    }
 
     internal fun drawTicksOnYAxis(canvas: Canvas) {
         val yAxisXPos = axisPaddingPx.toFloat()
@@ -71,15 +70,14 @@ class AxisDrawer(
         val tickStep = (yAxisYPos - axisPaddingPx) / tickCountY
         var currentY: Float = yAxisYPos - tickStep
 
-        for (i in 0 until tickCountY) {
+        repeat(tickCountY) {
             drawAxisYTick(canvas, yAxisXPos, currentY, axisTickHeightPx)
             currentY -= tickStep
         }
     }
 
-    private fun drawAxisYTick(canvas: Canvas, tickX: Float, tickStartY: Float, tickHeight: Int) {
+    private fun drawAxisYTick(canvas: Canvas, tickX: Float, tickStartY: Float, tickHeight: Int) =
         canvas.drawLine(tickX, tickStartY, tickX + tickHeight, tickStartY, axisTickPaint)
-    }
 
     internal fun drawDotsAtTickIntersections(canvas: Canvas) {
         val gridDotsX = calculateGridDotsX()
@@ -96,7 +94,7 @@ class AxisDrawer(
         val xAxisXPos = (view.width - axisPaddingPx).toFloat()
         val tickStepX = (xAxisXPos - axisPaddingPx) / tickCountX
         var currentX: Float = axisPaddingPx.toFloat() + tickStepX
-        for (i in 0 until tickCountX) {
+        repeat(tickCountX) {
             xTickPositions.add(currentX)
             currentX += tickStepX
         }
@@ -108,7 +106,7 @@ class AxisDrawer(
         val yAxisYPos = (view.height - axisPaddingPx).toFloat()
         val tickStepY = (yAxisYPos - axisPaddingPx) / tickCountY
         var currentY: Float = yAxisYPos - tickStepY
-        for (i in 0 until tickCountY) {
+        repeat(tickCountY) {
             yTickPositions.add(currentY)
             currentY -= tickStepY
         }
