@@ -3,6 +3,7 @@ package otus.homework.customview.presentation.mapper
 import otus.homework.customview.data.Payload
 import otus.homework.customview.presentation.model.PieChartAngle
 import otus.homework.customview.presentation.model.PieChartColor
+import otus.homework.customview.utils.DEGREES_IN_CIRCLE
 
 fun List<Payload>.toPieChartAngles() : List<PieChartAngle> {
     val angles = mutableListOf<PieChartAngle>()
@@ -20,7 +21,7 @@ fun List<Payload>.toPieChartAngles() : List<PieChartAngle> {
 }
 
 private fun getAngleForPayload(payload: Payload, totalAmount: Int): Float {
-    return (payload.amount.toFloat() / totalAmount) * 360f
+    return (payload.amount.toFloat() / totalAmount) * DEGREES_IN_CIRCLE
 }
 
 private fun getTotalAmount(payloads: List<Payload>): Int {
