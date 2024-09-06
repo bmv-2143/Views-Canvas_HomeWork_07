@@ -2,18 +2,22 @@ package otus.homework.customview.data
 
 import android.content.Context
 import com.google.gson.Gson
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.InputStreamReader
+import javax.inject.Inject
 
-class JsonDataSource {
+class JsonDataSource @Inject constructor(
+    @ApplicationContext private val applicationContext: Context
+) {
 
-    fun loadPayloads(context: Context, payloadId: Int): List<Payload> {
-        readJsonFile(context, payloadId).let {
+    fun loadPayloads(payloadId: Int): List<Payload> {
+        readJsonFile(payloadId).let {
             return parseJson(it)
         }
     }
 
-    private fun readJsonFile(context: Context, resId: Int): String {
-        val inputStream = context.resources.openRawResource(resId)
+    private fun readJsonFile(resId: Int): String {
+        val inputStream = applicationContext.resources.openRawResource(resId)
         val reader = InputStreamReader(inputStream)
         return reader.readText().also {
             reader.close()
