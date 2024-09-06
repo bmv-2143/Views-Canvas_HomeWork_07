@@ -16,6 +16,9 @@ class GraphDrawer(
 ) {
     private val axisPaddingPx = 32.dp.px
     private val axisYMaxValue = 10f
+    private val daysInMonth = 31f
+    private val axisYRightTextOffset = 30
+    private val dashedLineAboveTextOffset = 20
     private val graphPath = Path()
 
     private val graphPaint = Paint().apply {
@@ -24,11 +27,14 @@ class GraphDrawer(
         style = Paint.Style.STROKE
     }
 
+    private val dashPathEffect = DashPathEffect(
+        /* intervals: [lineLength, gapLength]  = */ floatArrayOf(10f, 20f),
+        /* phase = */ 0f)
     private val dashedLinePaint = Paint().apply {
         color = Color.BLUE
         strokeWidth = 5f
         style = Paint.Style.STROKE
-        pathEffect = DashPathEffect(floatArrayOf(10f, 20f), 0f)
+        pathEffect = dashPathEffect
     }
 
     private val amountTextPaint = Paint().apply {
@@ -38,16 +44,19 @@ class GraphDrawer(
         strokeWidth = 4f
     }
 
+    private val graphPeaksDotsRadius = 15f
+    private val graphPeaksPaint = Paint().apply {
+        color = Color.RED
+        style = Paint.Style.FILL
+    }
+
     internal fun drawPurchaseDots(canvas: Canvas) {
         for ((day, amount) in daysToExpenses) {
             val x = day.toFloat()
             val y = mapAmountToYAxis(amount.toFloat())
 
             if (amount != 0) {
-                canvas.drawCircle(axisToScreenX(x), axisToScreenY(y), 15f, Paint().apply {
-                    color = Color.RED
-                    style = Paint.Style.FILL
-                })
+                canvas.drawCircle(axisToScreenX(x), axisToScreenY(y), graphPeaksDotsRadius, graphPeaksPaint)
             }
         }
     }
@@ -74,12 +83,10 @@ class GraphDrawer(
                 val y = mapAmountToYAxis(amount.toFloat())
                 val screenY = axisToScreenY(y)
                 val text = amount.toString()
-                val axisYRightOffset = 30
-                val dashedLineAboveOffset = 20
                 canvas.drawText(
                     text,
-                    axisPaddingPx.toFloat() + axisYRightOffset,
-                    screenY - dashedLineAboveOffset,
+                    axisPaddingPx.toFloat() + axisYRightTextOffset,
+                    screenY - dashedLineAboveTextOffset,
                     amountTextPaint
                 )
             }
@@ -104,13 +111,13 @@ class GraphDrawer(
         return currentAmount * scaleFactor
     }
 
-    private fun axisToScreenX(axisX: Float, maxXValue: Float = 31f): Float {
+    private fun axisToScreenX(axisX: Float, maxXValue: Float = daysInMonth): Float {
         val drawableWidth = view.width - 2 * axisPaddingPx
         val xScaleFactor = drawableWidth / maxXValue
         return axisPaddingPx + axisX * xScaleFactor
     }
 
-    private fun axisToScreenY(axisY: Float, maxYValue: Float = 10f): Float {
+    private fun axisToScreenY(axisY: Float, maxYValue: Float = axisYMaxValue): Float {
         val drawableHeight = view.height - 2 * axisPaddingPx
         val yScaleFactor = drawableHeight / maxYValue
         return view.height - axisPaddingPx - axisY * yScaleFactor
