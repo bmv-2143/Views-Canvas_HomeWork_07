@@ -25,7 +25,6 @@ class CustomViewViewModel @Inject constructor(
 ) : ViewModel() {
 
     private lateinit var _payloads: List<Payload>
-
     private val _pieChartAngles = MutableStateFlow<List<PieChartAngle>>(emptyList())
     val pieChartAngles = _pieChartAngles.asStateFlow()
 
@@ -36,9 +35,8 @@ class CustomViewViewModel @Inject constructor(
         }
     }
 
-    fun getMaxDailyExpenseOfAllCategories(): Int {
-        return graphCalculator.getMaxDailyExpenseOfAllCategories(_payloads)
-    }
+    fun getMaxDailyExpenseOfAllCategories(): Int =
+        graphCalculator.getMaxDailyExpenseOfAllCategories(_payloads)
 
     fun getDaysToExpenses(payloadCategory: String): Map<Int, Int> {
         val daysToExpenses = mutableMapOf<Int, Int>().withDefault { 0 }

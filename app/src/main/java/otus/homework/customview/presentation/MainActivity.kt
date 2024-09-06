@@ -15,12 +15,10 @@ import otus.homework.customview.databinding.ActivityMainBinding
 class MainActivity : AppCompatActivity() {
 
     private val viewModel by viewModels<CustomViewViewModel>()
-
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         observePieChartAngles()
