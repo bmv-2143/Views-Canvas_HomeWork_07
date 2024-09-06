@@ -1,4 +1,4 @@
-package otus.homework.customview.presentation.piechartview
+package otus.homework.customview.presentation.model
 
 enum class PieChartColor(val intColor: Int) {
     BLUE(0xFF0000FF.toInt()),
