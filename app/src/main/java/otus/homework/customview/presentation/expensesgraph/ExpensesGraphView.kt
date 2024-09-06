@@ -5,9 +5,7 @@ import android.graphics.Canvas
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
-import otus.homework.customview.utils.TAG
 import otus.homework.customview.utils.dp
 import otus.homework.customview.utils.px
 import otus.homework.customview.utils.toBundle
@@ -54,29 +52,18 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
         val size = min(widthSize, heightSize)
 
         val width: Int = when (widthMode) {
-            MeasureSpec.EXACTLY -> widthSize.also {
-                Log.e(TAG, "onMeasure: EXACTLY: $widthSize $heightSize")
-            }
-
-            MeasureSpec.AT_MOST -> defaultWidthPx.coerceAtMost(size).also {
-                Log.e(TAG, "onMeasure: AT_MOST: $widthSize $heightSize")
-            }
-
-            else -> defaultWidthPx.also {
-                Log.e(TAG, "onMeasure: UNSPECIFIED: $widthSize $heightSize")
-            }
+            MeasureSpec.EXACTLY -> widthSize
+            MeasureSpec.AT_MOST -> defaultWidthPx.coerceAtMost(size)
+            else -> defaultWidthPx
         }
 
         val height: Int = when (heightMode) {
             MeasureSpec.EXACTLY -> size
-
             MeasureSpec.AT_MOST -> defaultHeightPx.coerceAtMost(size)
-
             else -> defaultHeightPx
         }
 
         setMeasuredDimension(width, height)
-        Log.e(TAG, "setMeasuredDimension: $width $height")
     }
 
     override fun onDraw(canvas: Canvas) {
