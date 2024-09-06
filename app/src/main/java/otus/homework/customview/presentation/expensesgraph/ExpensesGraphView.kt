@@ -19,28 +19,27 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
 
     private val dayToExpenses = mutableMapOf<Int, Int>().withDefault { 0 }
     private var maxCategoryTotalAmount = 0
+    private var axisDrawer: AxisDrawer = AxisDrawer(this)
     private var graphDrawer: GraphDrawer? = null
-    private var axisDrawer: AxisDrawer? = null
 
     fun setMaxDailyExpenseOfAllCategories(maxCategoryTotalAmount: Int) {
         this.maxCategoryTotalAmount = maxCategoryTotalAmount
-        initDrawers()
+        initGraphDrawer()
     }
 
     fun setDaysToExpenses(dayToExpenses: Map<Int, Int>) {
         this.dayToExpenses.clear()
         this.dayToExpenses.putAll(dayToExpenses)
-        initDrawers()
+        initGraphDrawer()
         invalidate()
     }
 
-    private fun initDrawers() {
+    private fun initGraphDrawer() {
         graphDrawer = GraphDrawer(
             this,
             maxCategoryTotalAmount = maxCategoryTotalAmount,
             daysToExpenses = dayToExpenses,
         )
-        axisDrawer = AxisDrawer(this)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -67,11 +66,11 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
     }
 
     override fun onDraw(canvas: Canvas) {
-        axisDrawer?.let {
-            it.drawTicksOnXAxis(canvas)
-            it.drawTicksOnYAxis(canvas)
-            it.drawAxis(canvas)
-            it.drawDotsAtTickIntersections(canvas)
+        with(axisDrawer) {
+            drawTicksOnXAxis(canvas)
+            drawTicksOnYAxis(canvas)
+            drawAxis(canvas)
+            drawDotsAtTickIntersections(canvas)
         }
 
         graphDrawer?.let {
@@ -105,7 +104,7 @@ class ExpensesGraphView(context: Context, attrs: AttributeSet) : View(context, a
             dayToExpenses.putAll(dayToExpensesBundle.toMap())
         }
         maxCategoryTotalAmount = bundle.getInt(maxCategoryTotalAmountKey)
-        initDrawers()
+        initGraphDrawer()
         invalidate()
     }
 }
