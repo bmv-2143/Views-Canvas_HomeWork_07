@@ -3,6 +3,10 @@ package otus.homework.customview.presentation.piechartview
 import android.graphics.RectF
 import android.view.MotionEvent
 import otus.homework.customview.presentation.model.PieChartAngle
+import otus.homework.customview.utils.DEGREES_IN_CIRCLE
+import kotlin.math.atan2
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 object GeometryHelper {
 
@@ -14,7 +18,7 @@ object GeometryHelper {
         val centerY = pieChartContainer.centerY()
         val radius = pieChartContainer.width() / 2
 
-        val distance = Math.sqrt(Math.pow((x - centerX).toDouble(), 2.0) + Math.pow((y - centerY).toDouble(), 2.0))
+        val distance = sqrt((x - centerX).toDouble().pow(2.0) + (y - centerY).toDouble().pow(2.0))
 
         return distance <= radius
     }
@@ -26,13 +30,10 @@ object GeometryHelper {
         val centerX = pieChartContainer.centerX()
         val centerY = pieChartContainer.centerY()
 
-        // Calculate the angle of the click relative to the center of the pie chart
-        val clickAngle = Math.toDegrees(Math.atan2((y - centerY).toDouble(), (x - centerX).toDouble())).toFloat()
+        // Angle of the click relative to the center of the pie chart
+        val clickAngle = Math.toDegrees(atan2((y - centerY).toDouble(), (x - centerX).toDouble())).toFloat()
 
-        // Normalize the angle to be within the range [0, 360)
-        val normalizedClickAngle = (clickAngle + 360) % 360
-
-        // Check if the normalized click angle is within the start and end angles of the PieChartAngle
+        val normalizedClickAngle = (clickAngle + DEGREES_IN_CIRCLE) % DEGREES_IN_CIRCLE
         return normalizedClickAngle >= angle.startAngle && normalizedClickAngle <= angle.endAngle
     }
 
